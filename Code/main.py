@@ -1,4 +1,5 @@
-import sympy
+import sympy as sp
+
 
 class rsa_key:
     def __init__(self, bits_modulo=2048, e=2**16+1):
@@ -18,25 +19,30 @@ class rsa_key:
     
     def generate_distinct_primes(self, bits_modulo):
         """
-        Generamos P y Q, asegurándonos de que sean distintos.
+        We generate P and Q, ensuring that they are distinct
+        gcd(e, p-1) = 1 and gcd(e, q-1) = 1  
         """
         a = 2**(bits_modulo//2 - 1)
         b = (2**(bits_modulo//2)) - 1
         
-        primeP = sympy.randprime(a, b)
-        primeQ = sympy.randprime(a, b)
-
-        # Ensure that both primes are different. If not, generate Q again
-        while primeQ == primeP:
-            primeQ = sympy.randprime(a, b)
+        while True:
+            # Generate a random prime p such that gcd(e, p-1) = 1
+            primeP = sp.randprime(a, b)
+            while sp.gcd(self.publicExponent, primeP - 1) != 1:
+                primeP = sp.randprime(a, b)
+            
+            # Generate a random prime q such that gcd(e, q-1) = 1 and q != p
+            primeQ = sp.randprime(a, b)
+            while primeQ == primeP or sp.gcd(self.publicExponent, primeQ - 1) != 1:
+                primeQ = sp.randprime(a, b)
+            
+            return primeP, primeQ
         
-        return primeP, primeQ
-
     def calculate_phi_n(self):
         """
         Calcula φ(n) = (P-1) * (Q-1)
         """
-        return sympy.totient(self.primeP) * sympy.totient(self.primeQ)
+        return sp.totient(self.primeP) * sp.totient(self.primeQ)
             
     def sign(self, message):
         """
