@@ -1,3 +1,4 @@
+import sympy
 
 class block:
     def __init__(self):
@@ -64,7 +65,6 @@ class block_chain:
         """
 
         
-        
 class transaction:
     def __init__(self, message, RSAkey):
         """
@@ -85,16 +85,16 @@ class transaction:
                 el booleano False en cualquier otro caso.
         """
         
+
 class rsa_key:
     def __init__(self, bits_modulo=2048, e=2**16+1):
         """
         Genera una clave RSA (de 2048 bits y exponente público 2**16+1 por defecto)
         """
-        self.publicExponent
+        self.publicExponent = e
         self.privateExponent
-        self.modulus
-        self.primeP
-        self.primeQ
+        self.primeP, self.primeQ = self.generate_distinct_primes(bits_modulo)
+        self.modulus = self.primeP * self.primeQ
         self.privateExponentModulusPhiP
         self.privateExponentModulusPhiQ
         self.inverseQModulusP
@@ -102,6 +102,28 @@ class rsa_key:
     def __repr__(self):
         return str(self.__dict__)
     
+    def generate_distinct_primes(self, bits_modulo):
+        """
+        Generamos P y Q, asegurándonos de que sean distintos.
+        """
+        a = 2**(bits_modulo - 1)
+        b = 2**bits_modulo - 1
+        
+        primeP = sympy.randprime(a, b)
+        primeQ = sympy.randprime(a, b)
+
+        # Ensure that both primes are different. If not, generate Q again
+        while primeQ == primeP:
+            primeQ = sympy.randprime(a, b)
+        
+        return primeP, primeQ
+
+    def calculate_phi_n(self):
+        """
+        Calcula φ(n) = (P-1) * (Q-1)
+        """
+        return sympy.totient(self.primeP) * sympy.totient(self.primeQ)
+            
     def sign(self, message):
         """
         Salida: un entero que es la firma de "message" hecha con la clave RSA usando el TCR
