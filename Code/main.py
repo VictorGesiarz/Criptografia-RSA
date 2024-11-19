@@ -20,8 +20,8 @@ class rsa_key:
         """
         Generamos P y Q, asegurándonos de que sean distintos.
         """
-        a = 2**(bits_modulo - 1)
-        b = 2**bits_modulo - 1
+        a = 2**(bits_modulo//2 - 1)
+        b = (2**(bits_modulo//2)) - 1
         
         primeP = sympy.randprime(a, b)
         primeQ = sympy.randprime(a, b)
