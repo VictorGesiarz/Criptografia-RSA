@@ -6,10 +6,11 @@ class rsa_key:
         """
         Genera una clave RSA (de 2048 bits y exponente público 2**16+1 por defecto)
         """
-        self.publicExponent = e
-        self.privateExponent
         self.primeP, self.primeQ = self.generate_distinct_primes(bits_modulo)
-        self.modulus = self.primeP * self.primeQ
+        self.modulus = self.primeP * self.primeQ # Calculamos n
+        self.publicExponent = e
+        self.phi_n = self.calculate_lcm(self.primeP - 1, self.primeQ - 1)  # mcm(p-1, q-1)
+        self.privateExponent = self.calculate_private_exponent()  # Calculamos d
         self.privateExponentModulusPhiP
         self.privateExponentModulusPhiQ
         self.inverseQModulusP
@@ -38,11 +39,20 @@ class rsa_key:
             
             return primeP, primeQ
         
-    def calculate_phi_n(self):
+    def calculate_lcm(self, a, b):
         """
-        Calcula φ(n) = (P-1) * (Q-1)
+        Calcula el mínimo común múltiplo entre dos números: a y b
         """
-        return sp.totient(self.primeP) * sp.totient(self.primeQ)
+        return abs(a * b) // sp.gcd(a, b)
+    
+    def calculate_private_exponent(self):
+        """
+        Calcula el exponente privado d = e^-1 mod mcm(p-1, q-1).
+        """
+        try:
+            return sp.mod_inverse(self.publicExponent, self.phi_n)
+        except ValueError:
+            raise ValueError("El inverso modular no existe. Verifica los valores de e, p y q.")
             
     def sign(self, message):
         """
