@@ -9,8 +9,11 @@ class rsa_key:
         self.primeP, self.primeQ = self.generate_distinct_primes(bits_modulo)
         self.modulus = self.primeP * self.primeQ # Calculamos n
         self.publicExponent = e
-        self.phi_n = self.calculate_lcm(self.primeP - 1, self.primeQ - 1)  # mcm(p-1, q-1)
+        self.phi_n = (self.primeP - 1) * (self.primeQ - 1)
+
         self.privateExponent = self.calculate_private_exponent()  # Calculamos d
+        self.privateExponent = sp.mod_inverse(self.publicExponent, self.phi_n)
+        
         self.privateExponentModulusPhiP
         self.privateExponentModulusPhiQ
         self.inverseQModulusP
@@ -50,7 +53,7 @@ class rsa_key:
         Calcula el exponente privado d = e^-1 mod mcm(p-1, q-1).
         """
         try:
-            return sp.mod_inverse(self.publicExponent, self.phi_n)
+            return sp.mod_inverse(self.publicExponent, self.calculate_lcm(self.primeP-1, self.primeQ-1))
         except ValueError:
             raise ValueError("El inverso modular no existe. Verifica los valores de e, p y q.")
             
