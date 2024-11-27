@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 modulus_dict = {}
 EXPONENT = 0
 
-# Ruta de la carpeta que quieres recorrer
+# Ruta de la carpeta a recorrer
 carpeta = "./RSA_RW/RSA_RW/"
 
 # Recorrer los archivos en la carpeta
@@ -34,7 +34,7 @@ for archivo in os.listdir(carpeta):
                 EXPONENT = exponent
             elif EXPONENT != 0 and exponent != EXPONENT:
                 raise ValueError(f"The exponent of one of the users is different from the rest:\n user: \
-                                  {name}, exponent: {exponent} \n another exponent: {EXPONENT}")
+                                {name}, exponent: {exponent} \n another exponent: {EXPONENT}")
 
 
 # Selección del usuario
