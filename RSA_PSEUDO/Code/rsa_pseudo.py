@@ -56,10 +56,10 @@ for name in names:
     n_bin = bin(n)[2:]
 
     if len(n_bin) != 2048: 
-        print("Modulus has a different size than 2048")
+        print("\nModulus has a size smaller than 2048\n")
         padding_length = 2048 - len(n_bin)
         if padding_length < 0: 
-            raise ValueError("Modulus has a size bigger than 2048")
+            raise ValueError("\nModulus has a size bigger than 2048\n")
         padding = "0" * padding_length
         n_bin = padding + n_bin
 
