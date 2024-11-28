@@ -52,14 +52,21 @@ names = ['huilin.ni', 'victor.gesiarz']
 
 getcontext().prec = 1024
 for name in names:
-    n = modulus_dict[name]
-    n_bin = bin(n)[2:]
 
-    if len(n_bin) != 2048: 
-        print("\nModulus has a size smaller than 2048\n")
+    print("\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    print(f"FACTORING OF {name}'s MODULE.")
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+    
+    n_original = modulus_dict[name]
+    n_bin = bin(n_original)[2:]
+
+    length = len(n_bin)
+    if length != 2048: 
+        print(f"\nModulus has a size {len(n_bin)}, which is smaller than 2048. \
+                \nProceeding to add 0 padding to the left.")
         padding_length = 2048 - len(n_bin)
         if padding_length < 0: 
-            raise ValueError("\nModulus has a size bigger than 2048\n")
+            raise ValueError(f"\nModulus has a size {len(n_bin)}, which is bigger than 2048.")
         padding = "0" * padding_length
         n_bin = padding + n_bin
 
@@ -73,29 +80,35 @@ for name in names:
     part3 = n_bin[partition_length*2:partition_length*3] # Primera mitad de r * s * (r^2 + s^2)
     part4 = n_bin[partition_length*3:] # Segunda mitad de r * s
 
-    combinations = ['00', '01', '10', '11']
-    r_found = False
-    for combination in combinations: 
 
-        print(f"Part1: {part1}\n")
+    for combination in range(1, 3):
 
-        part1 = part1[:-2] + combination
-        r_s = part1 + part4
-        s_r = part4 + part1
-        middle = "1" + part2 + part3
-        r2_s2 = bin(int(middle, 2) - int(s_r, 2))
+        rs_l = part1
+        rs_r = part4
+        
+        rs_l_minus_c = int(rs_l, 2) - combination 
+        rs_l_minus_c_bin = bin(rs_l_minus_c)[2:]
 
-        x = Decimal(int(r_s, 2))
-        y = Decimal(int(r2_s2, 2))
+        if length != 2048:
+            rs_l_minus_c_bin = padding + rs_l_minus_c_bin
+
+        r_s = int(rs_l_minus_c_bin + rs_r, 2)
+
+        middle = bin(combination)[2:] + (part2+part3)
+        s_r = int(rs_r + rs_l_minus_c_bin, 2)
+        r2_s2 = int(middle, 2) - s_r
+
+        x = Decimal(r_s)
+        y = Decimal(r2_s2)
 
         discriminant = y**2 - 4*x**2
-        if discriminant < 0:
-            print("Continue")
+        if discriminant < 0: 
             continue
-        t = (y + discriminant.sqrt()) / 2
+
+        t = (y + discriminant.sqrt()) // 2
         r = t.sqrt()
-        
-        s = x / r
+        s = r_s // r
+
         r_bin = bin(int(r))[2:]
         s_bin = bin(int(s))[2:]
         p_bin = r_bin + s_bin
@@ -104,7 +117,34 @@ for name in names:
         q = int(q_bin, 2)
         n = p * q 
 
-        if n == modulus: 
-            print("   P and Q FOUND! p * q = modulus correctly calculated\n")
+        if n == n_original: 
+            print("\n---- P and Q FOUND! p * q = modulus correctly calculated ----\n")
+            break
 
     print(f'For user {name}:\n    - P: {p}\n    - Q: {q}\n')
+
+
+    # ---------- Cálculo clave privada ----------
+    phi_n = (p-1) * (q-1)
+    d = sp.mod_inverse(EXPONENT, phi_n)
+    print(f'The private exponent of this user is: {d}\n')
+
+    dmp1 = d % (p - 1)
+    dmq1 = d % (q - 1)
+    iqmp = sp.mod_inverse(q, p)
+
+    private_key = rsa.RSAPrivateNumbers(
+        p = p, q = q, d = d, dmp1 = dmp1, dmq1 = dmq1, iqmp = iqmp, 
+        public_numbers = rsa.RSAPublicNumbers(EXPONENT, n)
+    ).private_key(default_backend())
+
+    pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    with open(carpeta + name + '_privatekeyRSA_pseudo.pem', 'wb') as pem_file:
+        pem_file.write(pem)
+
+    print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n")
