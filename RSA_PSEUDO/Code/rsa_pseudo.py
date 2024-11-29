@@ -8,22 +8,11 @@ from cryptography.hazmat.backends import default_backend
 from math import sqrt
 from decimal import Decimal, getcontext
 
-"""
-En Atenea también encontraréis el directorio RSA pseudo donde hay una serie de ficheros semejantes a los
-anteriores.
-
-Ahora el módulo público es un entero n = p q con p y q tales que si en o p es la concatenación de r y
-s de exactamente la mitad de bits de p, entonces q es, en binario, la concatenación de s y r. O sea que si
-p = r||s, entonces q = r||s con #bits(r) = #bits(s) = 1/2#bits(p) = 1/2#bits(q).
-
-Del fichero nombre.apellido pubkeyRSA pseudo.pem hay que extraer la clave pública, factorizar el módulo,
-calcular la clave privada, escribirla en un fichero en format PEM y descifrar el fichero usando openssl.
-"""
 
 modulus_dict = {}
 EXPONENT = 0
 
-# Ruta de la carpeta a recorrer
+# Path of the folder 
 carpeta = "./RSA_PSEUDO/"
 
 for archivo in os.listdir(carpeta):
@@ -70,17 +59,17 @@ for name in names:
         padding = "0" * padding_length
         n_bin = padding + n_bin
 
-    # len(n) = 2048, len(p) y len(q) = 1024
-    # len(r) y len(s) = 512 --> 1/4 parte de la long de n
+    # len(n) = 2048, len(p) and len(q) = 1024
+    # len(r) and len(s) = 512 --> 1/4 of the length of n
     partition_length = len(n_bin) // 4
 
-    # Partimos la cadena binaria en 4 partes
-    part1 = n_bin[:partition_length] # Primera mitad de r * s
-    part2 = n_bin[partition_length:partition_length*2] # Segunda mitad de r * s * (r^2 + s^2)
-    part3 = n_bin[partition_length*2:partition_length*3] # Primera mitad de r * s * (r^2 + s^2)
-    part4 = n_bin[partition_length*3:] # Segunda mitad de r * s
+    # We split the binary string into 4 parts
+    part1 = n_bin[:partition_length] # First half of r * s
+    part2 = n_bin[partition_length:partition_length*2] # Second half of r * s * (r^2 + s^2)
+    part3 = n_bin[partition_length*2:partition_length*3] # First half of r * s * (r^2 + s^2)
+    part4 = n_bin[partition_length*3:] # Second half of r * s
 
-
+    # Finding d (overflow)
     for combination in range(1, 3):
 
         rs_l = part1
@@ -124,7 +113,7 @@ for name in names:
     print(f'For user {name}:\n    - P: {p}\n    - Q: {q}\n')
 
 
-    # ---------- Cálculo clave privada ----------
+    # ---------- Private key calculation ----------
     phi_n = (p-1) * (q-1)
     d = sp.mod_inverse(EXPONENT, phi_n)
     print(f'The private exponent of this user is: {d}\n')
@@ -150,10 +139,10 @@ for name in names:
     print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n")
 
 
-# Comanda openssl para descifrar la clave cifrada del AES:
+# OpenSSL command to decrypt the AES-encrypted key:
 # openssl pkeyutl -decrypt -inkey huilin.ni_privatekeyRSA_pseudo.pem -in huilin.ni_RSA_pseudo.enc -out huilin.ni_AES_key.txt
 # openssl pkeyutl -decrypt -inkey victor.gesiarz_privatekeyRSA_pseudo.pem -in victor.gesiarz_RSA_pseudo.enc -out victor.gesiarz_AES_key.txt
 
-# Comanda openssl para descifrar el archivo cifrado con AES: 
+# OpenSSL command to decrypt the file encrypted with AES:
 # openssl enc -d -aes-128-cbc -pbkdf2 -kfile huilin.ni_AES_key.txt -in huilin.ni_AES_pseudo.enc -out huilin.ni_decrypted_file.png
 # openssl enc -d -aes-128-cbc -pbkdf2 -kfile victor.gesiarz_AES_key.txt -in victor.gesiarz_AES_pseudo.enc -out victor.gesiarz_decrypted_file.png

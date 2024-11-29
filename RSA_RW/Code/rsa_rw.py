@@ -9,10 +9,10 @@ from cryptography.hazmat.backends import default_backend
 modulus_dict = {}
 EXPONENT = 0
 
-# Ruta de la carpeta a recorrer
+# Path of the folder
 carpeta = "./RSA_RW/RSA_RW/"
 
-# Recorrer los archivos en la carpeta
+# Traverse the files in the folder
 for archivo in os.listdir(carpeta):
     if archivo.endswith(".pem"):
 
@@ -37,7 +37,7 @@ for archivo in os.listdir(carpeta):
                                 {name}, exponent: {exponent} \n another exponent: {EXPONENT}")
 
 
-# Selección del usuario
+# List with the users
 names = ["huilin.ni", "victor.gesiarz"]  
 
 for name in names: 
@@ -82,10 +82,10 @@ for name in names:
     print("\n - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n")
 
 
-# Comanda openssl para descifrar la clave cifrada del AES:
+# OpenSSL command to decrypt the AES-encrypted key:
 # openssl pkeyutl -decrypt -inkey huilin.ni_privatekeyRSA_RW.pem -in huilin.ni_RSA_RW.enc -out huilin.ni_AES_key.txt
 # openssl pkeyutl -decrypt -inkey victor.gesiarz_privatekeyRSA_RW.pem -in victor.gesiarz_RSA_RW.enc -out victor.gesiarz_AES_key.txt
 
-# Comanda openssl para descifrar el archivo cifrado con AES: 
+# OpenSSL command to decrypt the file encrypted with AES:
 # openssl enc -d -aes-128-cbc -pbkdf2 -kfile huilin.ni_AES_key.txt -in huilin.ni_AES_RW.enc -out huilin.ni_decrypted_file.png
 # openssl enc -d -aes-128-cbc -pbkdf2 -kfile victor.gesiarz_AES_key.txt -in victor.gesiarz_AES_RW.enc -out victor.gesiarz_decrypted_file.png

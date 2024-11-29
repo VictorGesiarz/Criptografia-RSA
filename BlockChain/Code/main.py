@@ -21,12 +21,12 @@ def timer(func):
 class rsa_key:
     def __init__(self, bits_modulo=2048, e=2**16+1):
         """
-        Genera una clave RSA (de 2048 bits y exponente público 2**16+1 por defecto)
+        Generates an RSA key (2048 bits and public exponent 2**16+1 by default)
         """
         self.publicExponent = e
 
         self.__primeP, self.__primeQ = self.__generate_distinct_primes(bits_modulo)
-        self.modulus = self.__primeP * self.__primeQ # Calculamos n
+        self.modulus = self.__primeP * self.__primeQ # Calculate n
         self.__phi_n = (self.__primeP - 1) * (self.__primeQ - 1)
 
         self.__privateExponent = sp.mod_inverse(self.publicExponent, self.__phi_n)
