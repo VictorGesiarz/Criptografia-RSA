@@ -1,4 +1,21 @@
 import sympy as sp
+import time
+import hashlib
+import random
+
+
+def timer(func):
+    """
+    A decorator to measure the execution time of a function.
+    Usage: Add @timer above the function definition.
+    """
+    def wrapper(*args, **kwargs):
+        start_time = time.time()  # Record start time
+        result = func(*args, **kwargs)  # Execute the function
+        end_time = time.time()  # Record end time
+        print(f"Function '{func.__name__}' took {end_time - start_time:.6f} seconds.")
+        return result  # Return the result of the original function
+    return wrapper
 
 
 class rsa_key:
@@ -6,22 +23,26 @@ class rsa_key:
         """
         Genera una clave RSA (de 2048 bits y exponente público 2**16+1 por defecto)
         """
-        self.primeP, self.primeQ = self.generate_distinct_primes(bits_modulo)
-        self.modulus = self.primeP * self.primeQ # Calculamos n
         self.publicExponent = e
-        self.phi_n = (self.primeP - 1) * (self.primeQ - 1)
 
-        self.privateExponent = self.calculate_private_exponent()  # Calculamos d
-        self.privateExponent = sp.mod_inverse(self.publicExponent, self.phi_n)
-        
-        self.privateExponentModulusPhiP
-        self.privateExponentModulusPhiQ
-        self.inverseQModulusP
+        self.__primeP, self.__primeQ = self.__generate_distinct_primes(bits_modulo)
+        self.modulus = self.__primeP * self.__primeQ # Calculamos n
+        self.__phi_n = (self.__primeP - 1) * (self.__primeQ - 1)
+
+        self.__privateExponent = sp.mod_inverse(self.publicExponent, self.__phi_n)
+        self.__privateExponentModulusPhiP = self.__privateExponent % (self.__primeP - 1)
+        self.__privateExponentModulusPhiQ = self.__privateExponent % (self.__primeQ - 1)
+        self.__inverseQModulusP = sp.mod_inverse(self.__primeQ, self.__primeP)
         
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'\nP: {self.__primeP}\n\n'
+        string += f'Q: {self.__primeQ}\n\n'
+        string += f'Modulus (n): {self.modulus}\n\n'
+        string += f'D: {self.__privateExponent}\n\n'
+        return string
     
-    def generate_distinct_primes(self, bits_modulo):
+    @timer
+    def __generate_distinct_primes(self, bits_modulo):
         """
         We generate P and Q, ensuring that they are distinct
         gcd(e, p-1) = 1 and gcd(e, q-1) = 1  
@@ -41,31 +62,37 @@ class rsa_key:
                 primeQ = sp.randprime(a, b)
             
             return primeP, primeQ
-        
-    def calculate_lcm(self, a, b):
-        """
-        Calcula el mínimo común múltiplo entre dos números: a y b
-        """
-        return abs(a * b) // sp.gcd(a, b)
     
-    def calculate_private_exponent(self):
-        """
-        Calcula el exponente privado d = e^-1 mod mcm(p-1, q-1).
-        """
-        try:
-            return sp.mod_inverse(self.publicExponent, self.calculate_lcm(self.primeP-1, self.primeQ-1))
-        except ValueError:
-            raise ValueError("El inverso modular no existe. Verifica los valores de e, p y q.")
-            
+    def get_public_numbers(self):
+        return self.publicExponent, self.modulus
+
+    @timer
     def sign(self, message):
         """
-        Salida: un entero que es la firma de "message" hecha con la clave RSA usando el TCR
+        Sign the message using RSA with CRT (Chinese Remainder Theorem).
+        Output: an integer that is the signature of "message".
         """
+
+        message = message % self.modulus
         
+        m1 = pow(message, self.__privateExponentModulusPhiP, self.__primeP) 
+        m2 = pow(message, self.__privateExponentModulusPhiQ, self.__primeQ)
+        
+        h = (self.__inverseQModulusP * (m1 - m2)) % self.__primeP
+        signature = (m2 + h * self.__primeQ) % self.modulus
+        
+        return signature
+
+    @timer
     def sign_slow(self, message):
         """
-        Salida: un entero que es la firma de "message" hecha con la clave RSA sin usar el TCR
+        Sign the message using RSA without CRT.
+        Output: an integer that is the signature of "message".
         """
+
+        message = message % self.modulus
+        signature = pow(message, self.__privateExponent, self.modulus)  # message^d mod n
+        return signature
 
 
 class rsa_public_key:
@@ -73,100 +100,178 @@ class rsa_public_key:
         """
         Genera la clave pública RSA asociada a la clave RSA "rsa_key"
         """
-        self.publicExponent
-        self.modulus
+        self.publicExponent = publicExponent
+        self.modulus = modulus
         
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'Public Exponent (e): {self.publicExponent}\n\n'
+        string += f'Modulus (n): {self.modulus}\n\n'
+        return string
     
     def verify(self, message, signature):
         """
-        Salida: el booleano True si "signature" se corresponde con la
-                firma de "message" hecha con la clave RSA asociada a la clave
-                pública RSA;
-                el booleano False en cualquier otro caso.
+        Verifies if the given signature corresponds to the message signed with the associated RSA private key.
+        Output:
+            - True if "signature" matches the signature of "message" with the public key.
+            - False otherwise.
         """
 
+        expected_message = pow(signature, self.publicExponent, self.modulus)
+        return expected_message == (message % self.modulus)
+
+
 class transaction:
-    def __init__(self, message=0, RSAkey=0):
+    def __init__(self, message=0, RSAkey=None):
         """
         Genera una transacción firmando "message" con la clave "RSAkey"
         """
-        self.public_key
-        self.message
-        self.signature
+
+        if RSAkey is None:
+            raise ValueError("RSA key must be provided.")
+        
+        e, n = RSAkey.get_public_numbers()
+        self.public_key = rsa_public_key(e, n)
+        self.message = message
+        self.signature = RSAkey.sign(message)
         
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'Public Key:\n- - - - -\n{self.public_key}- - - - -\n\n'
+        string += f'Message: {self.message}\n\n'
+        string += f'Signature: {self.signature}\n\n'
+        return string
     
     def verify(self):
         """
-        Salida: el booleano True si "signature" se corresponde con la
-                firma de "message" hecha con la clave RSA asociada a la clave
-                pública RSA;
-                el booleano False en cualquier otro caso.
+        Verifies if the signature corresponds to the message using the public key.
+        Returns:
+            - True if the signature matches the message.
+            - False otherwise.
         """
+        return self.public_key.verify(self.message, self.signature)
+
 
 class block:
     def __init__(self):
         """
-        Crea un bloque (no necesariamente válido)
+        Creates a block (not necessarily valid).
         """
-        self.block_hash
-        self.previous_block_hash
-        self.transaction
-        self.seed
+        self.block_hash = None 
+        self.previous_block_hash = None  
+        self.transaction = None  
+        self.seed = None
         
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'Block Hash: {self.block_hash}\n\n'
+        string += f'Previous Block Hash: {self.previous_block_hash}\n\n'
+        string += f'Seed: {self.seed}\n\n'
+        string += f'Transaction: \n - - - - - \n{self.transaction} - - - - -\n'
+        return string
     
     def genesis(self, transaction):
         """
-        Genera el primer bloque de una cadena con la transacción "transaction"
-        que se caracteriza por:
-            - previous_block_hash=0
-            - ser válido
+        Creates the first block in the chain with the given transaction.
+        Characteristics:
+            - previous_block_hash = 0
+            - valid block
         """
+        self.previous_block_hash = 0 
+        self.transaction = transaction
+        self.seed = random.randint(0, int(1e9))  
+        self.block_hash = self.compute_hash()
         
     def next_block(self, transaction):
         """
-        Genera un bloque válido seguiente al actual con la transacción "transaction"
+        Generates a valid next block with the given transaction.
         """
-        
+        next_block = block()
+        next_block.previous_block_hash = self.block_hash 
+        next_block.transaction = transaction
+        next_block.seed = random.randint(0, int(1e9)) 
+        next_block.block_hash = next_block.compute_hash()  
+        return next_block
+
+    def compute_hash(self):
+        """
+        Computes the hash of the block using its attributes.
+        """
+        block_content = (
+            str(self.previous_block_hash) +
+            str(self.transaction) +
+            str(self.seed)
+        )
+        return hashlib.sha256(block_content.encode()).hexdigest()
+
     def verify_block(self):
         """
-        Verifica si un bloque es válido:
-            - Comprueba que el hash del bloque anterior cumple las condiciones exigidas
-            - Comprueba que la transacción del bloque es válida
-            - Comprueba que el hash del bloque cumple las condiciones exigidas
-        Salida: el booleano True si todas las comprobaciones son correctas;
-                el booleano False en cualquier otro caso.
+        Verifies if the block is valid:
+            - Checks that the block's hash matches its content.
+            - Checks that the previous block hash is valid.
+            - Checks that the transaction is valid.
         """
+        # Check if the block's hash matches the recomputed hash
+        if self.block_hash != self.compute_hash():
+            return False
+        
+        # Check if the transaction in the block is valid
+        if not self.transaction.verify():
+            return False
+        
+        # If genesis block, check special conditions
+        if self.previous_block_hash == 0:
+            return True
+
+        # Otherwise, check if the previous block hash is valid (non-zero)
+        return self.previous_block_hash is not None
 
 
 class block_chain:
-    def __init__(self, transaction=0):
+    def __init__(self, transaction=None):
         """
-        Genera una cadena de bloques que es una lista de bloques,
-        el primer bloque es un bloque "genesis" generado amb la transacción "transaction"
+        Creates a blockchain with a list of blocks.
+        The first block is the genesis block generated with the transaction "transaction".
         """
-        self.list_of_blocks
+        self.list_of_blocks = []
         
+        if transaction is not None:
+            genesis_block = block()
+            genesis_block.genesis(transaction)
+            self.list_of_blocks.append(genesis_block)
+        else:
+            raise ValueError("Initial transaction must be provided for the genesis block.")
+    
     def __repr__(self):
-        return str(self.__dict__)
+        return f"<Block Chain with {len(self.list_of_blocks)} blocks>"
     
     def add_block(self, transaction):
         """
-        Añade a la cadena un nuevo bloque válido generado con la transacción "transaction"
+        Adds a valid new block to the chain generated with the transaction "transaction".
         """
-        
+        last_block = self.list_of_blocks[-1]
+        new_block = last_block.next_block(transaction)
+        self.list_of_blocks.append(new_block)
+    
     def verify(self):
         """
-        Verifica si la cadena de bloques es válida:
-            - Comprueba que todos los bloques son válidos
-            - Comprueba que el primer bloque es un bloque "genesis"
-            - Comprueba que para cada bloque de la cadena el siguiente es correcto
-        Salida: el booleano True si todas las comprobaciones son correctas;
-                en cualquier otro caso, el booleano False y un entero
-                correspondiente al último bloque válido
+        Verifies if the blockchain is valid:
+            - Checks if all blocks are valid.
+            - Checks that the first block is a genesis block.
+            - Ensures each block in the chain is properly linked to the next one.
+        Output: True if all checks pass; 
+                False and the index of the last valid block if a validation fails.
         """
+        # Check if the first block is the genesis block
+        if not self.list_of_blocks[0].verify_block():
+            return False, 0  # Genesis block is invalid
+        
+        # Verify all blocks in the chain
+        for i in range(1, len(self.list_of_blocks)):
+            # Check if the current block is valid
+            if not self.list_of_blocks[i].verify_block():
+                return False, i  # Return the index of the invalid block
+            
+            # Check that the previous block's hash matches the current block's reference
+            if self.list_of_blocks[i].previous_block_hash != self.list_of_blocks[i - 1].block_hash:
+                return False, i  # Return the index of the block where the chain breaks
+        
+        # If all blocks are valid and linked properly
+        return True, len(self.list_of_blocks) - 1
