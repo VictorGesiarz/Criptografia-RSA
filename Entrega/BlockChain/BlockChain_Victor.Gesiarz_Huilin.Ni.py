@@ -34,15 +34,14 @@ class rsa_key:
         self.__privateExponentModulusPhiQ = self.__privateExponent % (self.__primeQ - 1)
         self.__inverseQModulusP = sp.mod_inverse(self.__primeQ, self.__primeP)
         
-    # def __repr__(self):
-    #     string = f'\nP: {self.__primeP}\n\n'
-    #     string += f'Q: {self.__primeQ}\n\n'
-    #     string += f'Modulus (n): {self.modulus}\n\n'
-    #     string += f'D: {self.__privateExponent}\n\n'
-    #     return string
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'\nP: {self.__primeP}\n\n'
+        string += f'Q: {self.__primeQ}\n\n'
+        string += f'Modulus (n): {self.modulus}\n\n'
+        string += f'D: {self.__privateExponent}\n\n'
+        return string
     
+    @timer
     def __generate_distinct_primes(self, bits_modulo):
         """
         We generate P and Q, ensuring that they are distinct
@@ -67,6 +66,7 @@ class rsa_key:
     def get_public_numbers(self):
         return self.publicExponent, self.modulus
 
+    @timer
     def sign(self, message):
         """
         Sign the message using RSA with CRT (Chinese Remainder Theorem).
@@ -83,6 +83,7 @@ class rsa_key:
         
         return signature
 
+    @timer
     def sign_slow(self, message):
         """
         Sign the message using RSA without CRT.
@@ -102,12 +103,10 @@ class rsa_public_key:
         self.publicExponent = publicExponent
         self.modulus = modulus
         
-    # def __repr__(self):
-    #     string = f'Public Exponent (e): {self.publicExponent}\n\n'
-    #     string += f'Modulus (n): {self.modulus}\n\n'
-    #     return string
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'Public Exponent (e): {self.publicExponent}\n\n'
+        string += f'Modulus (n): {self.modulus}\n\n'
+        return string
     
     def verify(self, message, signature):
         """
@@ -139,13 +138,11 @@ class transaction:
         self.message = message
         self.signature = RSAkey.sign(message)
         
-    # def __repr__(self):
-    #     string = f'Public Key:\n- - - - -\n{self.public_key}- - - - -\n\n'
-    #     string += f'Message: {self.message}\n\n'
-    #     string += f'Signature: {self.signature}\n\n'
-    #     return string
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'Public Key:\n- - - - -\n{self.public_key}- - - - -\n\n'
+        string += f'Message: {self.message}\n\n'
+        string += f'Signature: {self.signature}\n\n'
+        return string
     
     def verify(self):
         """
@@ -175,14 +172,12 @@ class block:
         self.transaction = None  
         self.seed = None
         
-    # def __repr__(self):
-    #     string = f'Block Hash: {self.block_hash}\n\n'
-    #     string += f'Previous Block Hash: {self.previous_block_hash}\n\n'
-    #     string += f'Seed: {self.seed}\n\n'
-    #     string += f'Transaction: \n - - - - - \n{self.transaction} - - - - -\n'
-    #     return string
     def __repr__(self):
-        return str(self.__dict__)
+        string = f'Block Hash: {self.block_hash}\n\n'
+        string += f'Previous Block Hash: {self.previous_block_hash}\n\n'
+        string += f'Seed: {self.seed}\n\n'
+        string += f'Transaction: \n - - - - - \n{self.transaction} - - - - -\n'
+        return string
     
     def genesis(self, transaction):
         """
@@ -267,10 +262,8 @@ class block_chain:
             # raise ValueError("Initial transaction must be provided for the genesis block.")
             ...
     
-    # def __repr__(self):
-    #     return f"<Block Chain with {len(self.list_of_blocks)} blocks>"
     def __repr__(self):
-        return str(self.__dict__)
+        return f"<Block Chain with {len(self.list_of_blocks)} blocks>"
     
     def add_block(self, transaction):
         """

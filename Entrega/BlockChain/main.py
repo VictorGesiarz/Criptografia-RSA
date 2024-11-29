@@ -4,6 +4,14 @@ import hashlib
 import random
 
 
+""""
+
+ESTE ARCHIVO ES EL MISMO QUE "BlockChain_Victor.Gesiarz_Huilin.Ni.py", PERO CON ESE NOMBRE PYTHON NO PERMITE 
+IMPORTARLO, POR LO QUE LO HEMOS PUESTO DUPLICADO. 
+
+"""
+
+
 def timer(func):
     """
     A decorator to measure the execution time of a function.
