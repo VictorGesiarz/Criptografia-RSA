@@ -10,11 +10,11 @@ def timer(func):
     Usage: Add @timer above the function definition.
     """
     def wrapper(*args, **kwargs):
-        start_time = time.time()  # Record start time
-        result = func(*args, **kwargs)  # Execute the function
-        end_time = time.time()  # Record end time
+        start_time = time.time() 
+        result = func(*args, **kwargs)  
+        end_time = time.time()  
         print(f"Function '{func.__name__}' took {end_time - start_time:.6f} seconds.")
-        return result  # Return the result of the original function
+        return result  
     return wrapper
 
 
@@ -26,7 +26,7 @@ class rsa_key:
         self.publicExponent = e
 
         self.__primeP, self.__primeQ = self.__generate_distinct_primes(bits_modulo)
-        self.modulus = self.__primeP * self.__primeQ # Calculate n
+        self.modulus = self.__primeP * self.__primeQ
         self.__phi_n = (self.__primeP - 1) * (self.__primeQ - 1)
 
         self.__privateExponent = sp.mod_inverse(self.publicExponent, self.__phi_n)
@@ -121,14 +121,18 @@ class rsa_public_key:
 
 
 class transaction:
-    def __init__(self, message=0, RSAkey=None):
+    def __init__(self, message=0, RSAkey=0):
         """
         Genera una transacción firmando "message" con la clave "RSAkey"
         """
 
-        if RSAkey is None:
-            raise ValueError("RSA key must be provided.")
-        
+        self.public_key = None
+        self.message = None
+        self.signature = None
+        if RSAkey != 0: 
+            self.initialize(message, RSAkey)
+
+    def initialize(self, message, RSAkey): 
         e, n = RSAkey.get_public_numbers()
         self.public_key = rsa_public_key(e, n)
         self.message = message
@@ -148,6 +152,14 @@ class transaction:
             - False otherwise.
         """
         return self.public_key.verify(self.message, self.signature)
+    
+    def from_dictionary(self, transaccion):
+        self.public_key = rsa_public_key(
+            publicExponent = transaccion["public_key"]["publicExponent"],
+            modulus = transaccion["public_key"]["modulus"]
+        )
+        self.message = transaccion["message"]
+        self.signature = transaccion["signature"]
 
 
 class block:
@@ -177,7 +189,7 @@ class block:
         self.previous_block_hash = 0 
         self.transaction = transaction
         self.seed = random.randint(0, int(1e9))  
-        self.block_hash = self.compute_hash()
+        self.block_hash = self.compute_hash(self)
         
     def next_block(self, transaction):
         """
@@ -187,19 +199,21 @@ class block:
         next_block.previous_block_hash = self.block_hash 
         next_block.transaction = transaction
         next_block.seed = random.randint(0, int(1e9)) 
-        next_block.block_hash = next_block.compute_hash()  
+        next_block.block_hash = next_block.compute_hash(next_block)  
         return next_block
 
-    def compute_hash(self):
+    def compute_hash(self, block):
         """
         Computes the hash of the block using its attributes.
         """
-        block_content = (
-            str(self.previous_block_hash) +
-            str(self.transaction) +
-            str(self.seed)
-        )
-        return hashlib.sha256(block_content.encode()).hexdigest()
+        entrada=str(block.previous_block_hash)
+        entrada+=str(block.transaction.public_key.publicExponent)
+        entrada+=str(block.transaction.public_key.modulus)
+        entrada+=str(block.transaction.message)
+        entrada+=str(block.transaction.signature)
+        entrada+=str(block.seed)
+        h=int(hashlib.sha256(entrada.encode()).hexdigest(),16)
+        return h
 
     def verify_block(self):
         """
@@ -209,7 +223,7 @@ class block:
             - Checks that the transaction is valid.
         """
         # Check if the block's hash matches the recomputed hash
-        if self.block_hash != self.compute_hash():
+        if self.block_hash != self.compute_hash(self):
             return False
         
         # Check if the transaction in the block is valid
@@ -222,6 +236,14 @@ class block:
 
         # Otherwise, check if the previous block hash is valid (non-zero)
         return self.previous_block_hash is not None
+    
+    def from_dictionary(self, bloque):
+        self.block_hash = bloque["block_hash"]
+        self.previous_block_hash = bloque["previous_block_hash"]
+        transaccion_aux = transaction()
+        transaccion_aux.from_dictionary(bloque["transaction"])
+        self.transaction = transaccion_aux
+        self.seed = bloque["seed"]
 
 
 class block_chain:
@@ -237,7 +259,8 @@ class block_chain:
             genesis_block.genesis(transaction)
             self.list_of_blocks.append(genesis_block)
         else:
-            raise ValueError("Initial transaction must be provided for the genesis block.")
+            # raise ValueError("Initial transaction must be provided for the genesis block.")
+            ...
     
     def __repr__(self):
         return f"<Block Chain with {len(self.list_of_blocks)} blocks>"
@@ -275,3 +298,11 @@ class block_chain:
         
         # If all blocks are valid and linked properly
         return True, len(self.list_of_blocks) - 1
+
+    def from_dictionary(self, lista_de_bloques):
+        aux = []
+        for i in lista_de_bloques['list_of_blocks']:
+            bloque = block()
+            bloque.from_dictionary(i)
+            aux.append(bloque)
+        self.list_of_blocks = aux

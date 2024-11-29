@@ -1,4 +1,3 @@
-import time
 from main import rsa_key, rsa_public_key, transaction, block, block_chain
 
 private_key = rsa_key(bits_modulo=2048)
