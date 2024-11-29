@@ -148,3 +148,12 @@ for name in names:
         pem_file.write(pem)
 
     print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n")
+
+
+# Comanda openssl para descifrar la clave cifrada del AES:
+# openssl pkeyutl -decrypt -inkey huilin.ni_privatekeyRSA_pseudo.pem -in huilin.ni_RSA_pseudo.enc -out huilin.ni_AES_key.txt
+# openssl pkeyutl -decrypt -inkey victor.gesiarz_privatekeyRSA_pseudo.pem -in victor.gesiarz_RSA_pseudo.enc -out victor.gesiarz_AES_key.txt
+
+# Comanda openssl para descifrar el archivo cifrado con AES: 
+# openssl enc -d -aes-128-cbc -pbkdf2 -kfile huilin.ni_AES_key.txt -in huilin.ni_AES_pseudo.enc -out huilin.ni_decrypted_file.png
+# openssl enc -d -aes-128-cbc -pbkdf2 -kfile victor.gesiarz_AES_key.txt -in victor.gesiarz_AES_pseudo.enc -out victor.gesiarz_decrypted_file.png
