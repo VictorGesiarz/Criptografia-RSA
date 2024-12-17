@@ -15,9 +15,26 @@ signature_tuple = (
     5665944802029951168612385975560511149978964867796618009229554554695039618868560857058585498994051253971070241725582009074416192241470619741064412300461145432
 )
 
+
+from pyasn1.type import univ, namedtype
+from pyasn1.codec.der.decoder import decode
+from pyasn1.codec.der.encoder import encode
+from io import BytesIO
+
+class ECDSASignature(univ.Sequence):
+    componentType = namedtype.NamedTypes(
+        namedtype.NamedType('r', univ.Integer()),
+        namedtype.NamedType('s', univ.Integer())
+    )
+signature_recreated = ECDSASignature()
+signature_recreated['r'] = signature_tuple[0]
+signature_recreated['s'] = signature_tuple[1]
+signature_recreated = encode(signature_recreated)
+print("Encoded ASN.1 DER signature:", signature_recreated)
+
+
 # Definir la curva utilizada (NIST P-521)
 cv = Curve.get_curve('secp521r1')
-
 
 # Construir la clave pública
 public_key = ECPublicKey(Point(public_key_tuple[0], public_key_tuple[1], cv))
@@ -29,7 +46,7 @@ ecdsa = ECDSA()
 try:
     is_valid = ecdsa.verify(
         hash_of_document.to_bytes((hash_of_document.bit_length() + 7) // 8, byteorder='big'),  # Hash del documento en bytes
-        signature_tuple,  # Firma como una tupla (r, s)
+        signature_recreated,  # Firma como una tupla (r, s)
         public_key  # Clave pública
     )
     if is_valid:
