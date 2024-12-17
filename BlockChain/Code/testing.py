@@ -1,6 +1,6 @@
 import json
 
-from main import block_chain
+from main import block_chain, block
 
 
 def load_file(file):
@@ -26,14 +26,28 @@ def test(file):
 		print(f"The Block Chain is not valid, verification error at: {index}\n\n")
 
 
-path = './BlockChain/'
+def test_block(file): 
+    chain_dict = load_file(file)
+    
+    b = block()
+    b.from_dictionary(chain_dict)
+    
+    correct = b.verify_block()
+    print(correct)
+    
 
-valid = 'Cadena_bloques_valida.block'
-false_block = 'Cadena_bloques_bloque_falso.block'
-false_seed = 'Cadena_bloques_seed_falsa.block'
-false_transaction = 'Cadena_bloques_transaccion_falsa.block'
 
-test(path + false_block)
-test(path + false_seed)
-test(path + false_transaction)
-test(path + valid)
+# path = './BlockChain/'
+
+# valid = 'Cadena_bloques_valida.block'
+# false_block = 'Cadena_bloques_bloque_falso.block'
+# false_seed = 'Cadena_bloques_seed_falsa.block'
+# false_transaction = 'Cadena_bloques_transaccion_falsa.block'
+
+# test(path + false_block)
+# test(path + false_seed)
+# test(path + false_transaction)
+# test(path + valid)
+
+
+test_block('./examen_prueba.txt')

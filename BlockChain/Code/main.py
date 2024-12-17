@@ -229,10 +229,12 @@ class block:
         """
         # Check if the block's hash matches the recomputed hash
         if self.block_hash != self.compute_hash(self):
+            print("Hash incorrecto")
             return False
         
         # Check if the transaction in the block is valid
         if not self.transaction.verify():
+            print("Transaccion incorrecta")
             return False
         
         # If genesis block, check special conditions
