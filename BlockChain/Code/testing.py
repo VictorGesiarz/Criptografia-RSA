@@ -50,4 +50,4 @@ def test_block(file):
 # test(path + valid)
 
 
-test_block('./examen_prueba.txt')
+test_block('./Examen/examen_prueba.txt')

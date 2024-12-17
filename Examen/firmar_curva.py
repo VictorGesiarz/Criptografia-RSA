@@ -35,7 +35,7 @@ try:
     if is_valid:
         print("La firma es válida: CIERTO")
     else:
-        print("La firma es inválida: FALSO")
+        print("La firma es válida: FALSO")
 except Exception as e:
     print(f"Error al verificar la firma: {e}")
-    print("La firma es inválida: FALSO")
+    print("La firma es válida: FALSO")
