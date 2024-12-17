@@ -18,8 +18,8 @@ n = curve.order
 
 # Calcular k usando las dos firmas
 k = ((H1 - H2) * mod_inverse(s1 - s2, n)) % n
-print(f"Valor de k: {k}")
+print(f"\nValor de k:\n\n{k}")
 
 # Calcular la clave privada d
 d = ((s1 * k - H1) * mod_inverse(r, n)) % n
-print(f"Clave privada: {d}")
+print(f"\nClave privada:\n\n{d}\n")
